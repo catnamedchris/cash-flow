@@ -156,6 +156,27 @@ function ExpandableRow({
   );
 }
 
+/* ── Scenario Presets ──────────────────────────────────────────────── */
+interface ScenarioPreset {
+  id: string;
+  label: string;
+  field: keyof SavingsInputs;
+  defaultAmount: number;
+  monthly: boolean;
+  direction: 'expense' | 'income';
+}
+
+const SCENARIO_PRESETS: ScenarioPreset[] = [
+  { id: 'housing',   label: 'Reduce Housing',        field: 'annualExpenses', defaultAmount: 500,   monthly: true,  direction: 'expense' },
+  { id: 'food',      label: 'Cut Food & Dining',     field: 'annualExpenses', defaultAmount: 300,   monthly: true,  direction: 'expense' },
+  { id: 'subs',      label: 'Drop Subscriptions',    field: 'annualExpenses', defaultAmount: 150,   monthly: true,  direction: 'expense' },
+  { id: 'transport', label: 'Reduce Transportation', field: 'annualExpenses', defaultAmount: 200,   monthly: true,  direction: 'expense' },
+  { id: 'raise',     label: 'Negotiate a Raise',     field: 'annualSalary',   defaultAmount: 15000, monthly: false, direction: 'income' },
+  { id: 'side',      label: 'Side Income',           field: 'annualBonus',    defaultAmount: 1000,  monthly: true,  direction: 'income' },
+];
+
+type ScenarioState = Record<string, { active: boolean; amount: number }>;
+
 /* ── Main App ──────────────────────────────────────────────────────── */
 function App() {
   const [inputs, setInputs] = useState<SavingsInputs>({
@@ -180,6 +201,10 @@ function App() {
   const [payrollOpen, setPayrollOpen] = useState(false);
   const [taxOpen, setTaxOpen] = useState(false);
   const [retOpen, setRetOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'breakdown' | 'whatif'>('breakdown');
+  const [scenarios, setScenarios] = useState<ScenarioState>(() =>
+    Object.fromEntries(SCENARIO_PRESETS.map((s) => [s.id, { active: false, amount: s.defaultAmount }])),
+  );
 
   const set = (field: keyof SavingsInputs) => (v: number) =>
     setInputs((prev) => ({ ...prev, [field]: v }));
@@ -263,7 +288,51 @@ function App() {
           </div>
 
           {/* ── Results ── */}
-          {r && (
+          {r && (() => {
+            const toggle = (id: string) =>
+              setScenarios((prev) => ({ ...prev, [id]: { ...prev[id], active: !prev[id].active } }));
+            const setAmount = (id: string, amount: number) =>
+              setScenarios((prev) => ({ ...prev, [id]: { ...prev[id], amount } }));
+            const activeCount = Object.values(scenarios).filter((s) => s.active).length;
+
+            const projected = activeCount > 0
+              ? (() => {
+                  const adj = { ...inputs };
+                  for (const preset of SCENARIO_PRESETS) {
+                    const state = scenarios[preset.id];
+                    if (!state.active) continue;
+                    const annualAmount = preset.monthly ? state.amount * 12 : state.amount;
+                    if (preset.direction === 'expense') {
+                      (adj[preset.field] as number) = ((adj[preset.field] as number) ?? 0) - annualAmount;
+                    } else {
+                      (adj[preset.field] as number) = ((adj[preset.field] as number) ?? 0) + annualAmount;
+                    }
+                  }
+                  return calculateSavings(adj);
+                })()
+              : null;
+
+            const netDelta = projected ? projected.netSavingsRate - r.netSavingsRate : 0;
+            const savingsDelta = projected ? projected.totalSavings - r.totalSavings : 0;
+
+            const rankedPresets = SCENARIO_PRESETS.map((preset) => {
+              const state = scenarios[preset.id];
+              const annualAmt = preset.monthly ? state.amount * 12 : state.amount;
+              const tweakedInputs = { ...inputs };
+              if (preset.direction === 'expense') {
+                (tweakedInputs[preset.field] as number) = ((tweakedInputs[preset.field] as number) ?? 0) - annualAmt;
+              } else {
+                (tweakedInputs[preset.field] as number) = ((tweakedInputs[preset.field] as number) ?? 0) + annualAmt;
+              }
+              const tweaked = calculateSavings(tweakedInputs);
+              const ppDelta = (tweaked.netSavingsRate - r.netSavingsRate) * 100;
+              const dollarDelta = tweaked.totalSavings - r.totalSavings;
+              return { preset, ppDelta, dollarDelta };
+            }).sort((a, b) => b.dollarDelta - a.dollarDelta);
+
+            const maxDollars = Math.max(...rankedPresets.map((rp) => Math.abs(rp.dollarDelta)));
+
+            return (
             <div className="lg:col-span-3 space-y-5">
               {/* Ring Charts */}
               <div className="rounded-2xl bg-white/[0.03] border border-white/[0.06] p-6 sm:p-8">
@@ -289,47 +358,241 @@ function App() {
                 </div>
               </div>
 
-              {/* Breakdown */}
-              <div className="rounded-2xl bg-white/[0.03] border border-white/[0.06] p-5 sm:p-6 space-y-1">
-                <h3 className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/30 pb-3">Breakdown</h3>
+              {/* Tabbed Card */}
+              <div className="rounded-2xl bg-white/[0.03] border border-white/[0.06]">
+                {/* Tab bar */}
+                <div className="flex border-b border-white/[0.06]">
+                  <button
+                    onClick={() => setActiveTab('breakdown')}
+                    className={`flex-1 py-3 text-[11px] font-semibold uppercase tracking-widest transition-colors cursor-pointer ${
+                      activeTab === 'breakdown'
+                        ? 'text-white/60 border-b-2 border-white/30'
+                        : 'text-white/25 hover:text-white/40'
+                    }`}
+                  >
+                    Breakdown
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('whatif')}
+                    className={`flex-1 py-3 text-[11px] font-semibold uppercase tracking-widest transition-colors cursor-pointer relative ${
+                      activeTab === 'whatif'
+                        ? 'text-white/60 border-b-2 border-white/30'
+                        : 'text-white/25 hover:text-white/40'
+                    }`}
+                  >
+                    What If…
+                    {activeCount > 0 && (
+                      <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-500/20 text-amber-400 text-[9px] font-bold">
+                        {activeCount}
+                      </span>
+                    )}
+                  </button>
+                </div>
 
-                <Row label="Gross Income" value={fmt(r.grossIncome)} bold tip="Total compensation before any taxes or deductions: salary + bonus + RSUs." />
+                {/* Tab content */}
+                <div className="p-5 sm:p-6">
+                  {activeTab === 'breakdown' ? (
+                    <div className="space-y-1">
+                      <Row label="Gross Income" value={fmt(r.grossIncome)} bold tip="Total compensation before any taxes or deductions: salary + bonus + RSUs." />
 
-                <ExpandableRow
-                  label="Total Taxes" value={`−${fmt(r.totalTaxes)}`} red
-                  open={taxOpen} onToggle={() => setTaxOpen(!taxOpen)}
-                >
-                  <Row label="Federal" value={fmt(r.federalTax)} sub />
-                  <Row label="California" value={fmt(r.stateTax)} sub />
-                  <Row label="Social Security" value={fmt(r.socialSecurity)} sub />
-                  <Row label="Medicare" value={fmt(r.medicare)} sub />
-                  <Row label="CA SDI" value={fmt(r.caSDI)} sub />
-                </ExpandableRow>
+                      <ExpandableRow
+                        label="Total Taxes" value={`−${fmt(r.totalTaxes)}`} red
+                        open={taxOpen} onToggle={() => setTaxOpen(!taxOpen)}
+                      >
+                        <Row label="Federal" value={fmt(r.federalTax)} sub />
+                        <Row label="California" value={fmt(r.stateTax)} sub />
+                        <Row label="Social Security" value={fmt(r.socialSecurity)} sub />
+                        <Row label="Medicare" value={fmt(r.medicare)} sub />
+                        <Row label="CA SDI" value={fmt(r.caSDI)} sub />
+                      </ExpandableRow>
 
-                <Row label="After-Tax Income" value={fmt(r.afterTaxIncome)} bold tip="Gross income minus all taxes. This is the denominator for your net savings rate — it represents all the money available to you before voluntary deductions." />
+                      <Row label="After-Tax Income" value={fmt(r.afterTaxIncome)} bold tip="Gross income minus all taxes. This is the denominator for your net savings rate — it represents all the money available to you before voluntary deductions." />
 
-                <div className="border-t border-white/[0.04] my-1" />
+                      <div className="border-t border-white/[0.04] my-1" />
 
-                <Row label="Take-Home Pay" value={fmt(r.takeHomePay)} bold tip="What actually hits your bank account: gross income minus taxes, minus all pre-tax deductions (401k, HSA, insurance), minus post-tax deductions (after-tax 401k, legal, life insurance)." />
+                      <Row label="Take-Home Pay" value={fmt(r.takeHomePay)} bold tip="What actually hits your bank account: gross income minus taxes, minus all pre-tax deductions (401k, HSA, insurance), minus post-tax deductions (after-tax 401k, legal, life insurance)." />
 
-                <div className="border-t border-white/[0.04] my-1" />
+                      <div className="border-t border-white/[0.04] my-1" />
 
-                <ExpandableRow
-                  label="Retirement Savings" value={fmt(r.retirementSavings)} green
-                  open={retOpen} onToggle={() => setRetOpen(!retOpen)}
-                  tip="Sum of all tax-advantaged contributions: 401k, mega backdoor Roth, HSA (employee + employer), and employer match."
-                >
-                  <Row label="Traditional 401k" value={fmt(inputs.traditional401k)} sub />
-                  <Row label="Mega Backdoor Roth" value={fmt(inputs.afterTax401k)} sub />
-                  <Row label="HSA (Employee)" value={fmt(inputs.hsaEmployee)} sub />
-                  <Row label="HSA (Employer)" value={fmt(inputs.hsaEmployer)} sub />
-                  <Row label="Employer Match" value={fmt(r.employerMatch)} sub />
-                </ExpandableRow>
+                      <ExpandableRow
+                        label="Retirement Savings" value={fmt(r.retirementSavings)} green
+                        open={retOpen} onToggle={() => setRetOpen(!retOpen)}
+                        tip="Sum of all tax-advantaged contributions: 401k, mega backdoor Roth, HSA (employee + employer), and employer match."
+                      >
+                        <Row label="Traditional 401k" value={fmt(inputs.traditional401k)} sub />
+                        <Row label="Mega Backdoor Roth" value={fmt(inputs.afterTax401k)} sub />
+                        <Row label="HSA (Employee)" value={fmt(inputs.hsaEmployee)} sub />
+                        <Row label="HSA (Employer)" value={fmt(inputs.hsaEmployer)} sub />
+                        <Row label="Employer Match" value={fmt(r.employerMatch)} sub />
+                      </ExpandableRow>
 
-                <Row label="Non-Retirement Savings" value={fmt(r.nonRetirementSavings)} green tip="Take-home pay minus annual expenses. This is money left over for brokerage accounts or other non-tax-advantaged savings." />
+                      <Row label="Non-Retirement Savings" value={fmt(r.nonRetirementSavings)} green tip="Take-home pay minus annual expenses. This is money left over for brokerage accounts or other non-tax-advantaged savings." />
+                    </div>
+                  ) : (
+                    <div>
+                      {/* Reset */}
+                      {activeCount > 0 && (
+                        <div className="flex justify-end mb-3">
+                          <button
+                            onClick={() => setScenarios(Object.fromEntries(SCENARIO_PRESETS.map((s) => [s.id, { active: false, amount: s.defaultAmount }])))}
+                            className="text-[11px] text-white/20 hover:text-white/40 transition-colors cursor-pointer"
+                          >
+                            Reset
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="space-y-2">
+                        {rankedPresets.map(({ preset, ppDelta, dollarDelta }) => {
+                          const state = scenarios[preset.id];
+                          const isActive = state.active;
+                          const isExpense = preset.direction === 'expense';
+                          const barWidth = maxDollars > 0 ? (Math.abs(dollarDelta) / maxDollars) * 100 : 0;
+
+                          return (
+                            <button
+                              key={preset.id}
+                              onClick={() => toggle(preset.id)}
+                              className={`w-full text-left rounded-xl border px-3.5 py-2.5 transition-all duration-200 cursor-pointer group ${
+                                isActive
+                                  ? isExpense
+                                    ? 'bg-amber-500/[0.06] border-amber-500/20'
+                                    : 'bg-violet-500/[0.06] border-violet-500/20'
+                                  : 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04]'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-3 mb-1.5">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                                    isActive
+                                      ? isExpense ? 'border-amber-400 bg-amber-400' : 'border-violet-400 bg-violet-400'
+                                      : 'border-white/20'
+                                  }`}>
+                                    {isActive && (
+                                      <svg className="w-2 h-2 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                      </svg>
+                                    )}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <span className={`text-[13px] font-medium truncate block ${isActive ? 'text-white/80' : 'text-white/50'}`}>
+                                      {preset.label}
+                                    </span>
+                                    <span className="text-[11px] text-white/20 font-mono tabular-nums">
+                                      {isExpense ? '−' : '+'}{preset.monthly ? `${fmt(state.amount)}/mo` : `${fmt(state.amount)}/yr`}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="flex items-baseline gap-2 flex-shrink-0">
+                                  <span className="text-[11px] text-white/20 font-mono tabular-nums">
+                                    +{ppDelta.toFixed(1)}pp
+                                  </span>
+                                  <span className={`text-[13px] font-mono tabular-nums font-semibold min-w-[70px] text-right ${
+                                    isExpense ? 'text-amber-400/80' : 'text-violet-400/80'
+                                  }`}>
+                                    +{fmt(dollarDelta)}/yr
+                                  </span>
+                                </div>
+                              </div>
+                              {/* Impact bar */}
+                              <div className="h-1 rounded-full bg-white/[0.04] overflow-hidden ml-5.5">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-500 ease-out ${
+                                    isExpense ? 'bg-amber-400/30' : 'bg-violet-400/30'
+                                  }`}
+                                  style={{ width: `${barWidth}%` }}
+                                />
+                              </div>
+                              {/* Inline amount editor */}
+                              {isActive && (
+                                <div className="mt-2 ml-5.5" onClick={(e) => e.stopPropagation()}>
+                                  <div className="relative inline-flex items-center">
+                                    <span className="absolute left-2.5 text-white/25 text-xs pointer-events-none">$</span>
+                                    <input
+                                      type="number"
+                                      value={state.amount || ''}
+                                      onChange={(e) => setAmount(preset.id, Number(e.target.value) || 0)}
+                                      className="w-24 rounded-lg bg-black/30 border border-white/[0.08] text-white text-xs py-1.5 pl-6 pr-2 focus:outline-none focus:border-white/20 font-mono tabular-nums"
+                                    />
+                                    <span className="ml-1.5 text-[11px] text-white/25">{preset.monthly ? '/mo' : '/yr'}</span>
+                                  </div>
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Combined projection */}
+                      {activeCount > 0 && projected && (() => {
+                        const realReturn = 0.07;
+                        const fvAnnuity = (pmt: number, r: number, n: number) =>
+                          pmt * ((Math.pow(1 + r, n) - 1) / r);
+                        const current5 = fvAnnuity(r.totalSavings, realReturn, 5);
+                        const current10 = fvAnnuity(r.totalSavings, realReturn, 10);
+                        const current20 = fvAnnuity(r.totalSavings, realReturn, 20);
+                        const projected5 = fvAnnuity(projected.totalSavings, realReturn, 5);
+                        const projected10 = fvAnnuity(projected.totalSavings, realReturn, 10);
+                        const projected20 = fvAnnuity(projected.totalSavings, realReturn, 20);
+
+                        return (
+                        <div className="mt-5 pt-4 border-t border-white/[0.06]">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-[11px] font-semibold uppercase tracking-widest text-white/30">Combined Impact</span>
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                            <div>
+                              <div className="text-lg font-bold text-emerald-400 font-mono tabular-nums">{pct(projected.grossSavingsRate)}</div>
+                              <div className="text-[10px] text-white/25 mt-0.5">Gross Rate</div>
+                            </div>
+                            <div>
+                              <div className="text-lg font-bold text-cyan-400 font-mono tabular-nums">{pct(projected.netSavingsRate)}</div>
+                              <div className="text-[10px] text-white/25 mt-0.5">Net Rate</div>
+                            </div>
+                            <div>
+                              <div className={`text-lg font-bold font-mono tabular-nums ${netDelta >= 0 ? 'text-amber-400' : 'text-red-400'}`}>
+                                +{(netDelta * 100).toFixed(1)}pp
+                              </div>
+                              <div className="text-[10px] text-white/25 mt-0.5">Net Change</div>
+                            </div>
+                            <div>
+                              <div className="text-lg font-bold text-white font-mono tabular-nums">+{fmt(savingsDelta)}</div>
+                              <div className="text-[10px] text-white/25 mt-0.5">Extra / Year</div>
+                            </div>
+                          </div>
+                          {/* Wealth projection comparison */}
+                          <div className="mt-4 pt-3 border-t border-white/[0.04]">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-[11px] text-white/25 flex items-center">
+                                Wealth projection at 7% real return
+                                <Tip text="Projected wealth from investing total annual savings at 7% real (inflation-adjusted) return. Compares your current plan against the plan with toggled changes." />
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-3">
+                              {[
+                                { label: '5 Years', current: current5, proj: projected5 },
+                                { label: '10 Years', current: current10, proj: projected10 },
+                                { label: '20 Years', current: current20, proj: projected20 },
+                              ].map((h) => (
+                                <div key={h.label} className="rounded-lg bg-white/[0.03] p-3 text-center">
+                                  <div className="text-[10px] font-semibold uppercase tracking-widest text-white/25 mb-2">{h.label}</div>
+                                  <div className="text-[12px] text-white/30 font-mono tabular-nums">{fmt(h.current)}</div>
+                                  <div className="text-lg font-bold text-white font-mono tabular-nums">{fmt(h.proj)}</div>
+                                  <div className="text-[12px] text-amber-400/80 font-mono tabular-nums font-semibold mt-0.5">+{fmt(h.proj - h.current)}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          )}
+            );
+          })()}
         </main>
       </div>
     </div>
