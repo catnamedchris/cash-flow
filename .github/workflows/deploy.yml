@@ -23,7 +23,8 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - run: npm ci --legacy-peer-deps
+      - run: echo "registry=https://registry.npmjs.org" > .npmrc
+      - run: rm package-lock.json && npm install --legacy-peer-deps
       - run: npm run build
         env:
           GITHUB_ACTIONS: true
