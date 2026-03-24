@@ -444,9 +444,12 @@ function App() {
           <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden">
             <div className="bg-panel/90 backdrop-blur-xl border-t border-edge px-4 py-3 flex items-center justify-around">
               <div className="text-center">
-                <div className="text-[9px] font-semibold uppercase tracking-widest text-muted">Saved</div>
-                <div className="text-sm font-bold font-mono tabular-nums bg-gradient-to-r from-accent to-accent-alt bg-clip-text text-transparent">
-                  <AnimatedNumber value={projected ? projected.totalSavings : r.totalSavings} format={fmt} />
+                <div className="text-[9px] font-semibold uppercase tracking-widest text-muted">Gross Rate</div>
+                <div className="text-sm font-bold font-mono tabular-nums text-heading">
+                  <AnimatedNumber
+                    value={(projected ? projected.grossSavingsRate : r.grossSavingsRate) * 100}
+                    format={(n) => `${n.toFixed(1)}%`}
+                  />
                 </div>
               </div>
               <div className="w-px h-6 bg-edge" />
@@ -461,9 +464,9 @@ function App() {
               </div>
               <div className="w-px h-6 bg-edge" />
               <div className="text-center">
-                <div className="text-[9px] font-semibold uppercase tracking-widest text-muted">Take Home</div>
-                <div className="text-sm font-bold font-mono tabular-nums text-heading">
-                  <AnimatedNumber value={projected ? projected.takeHomePay : r.takeHomePay} format={fmt} />
+                <div className="text-[9px] font-semibold uppercase tracking-widest text-muted">Saved</div>
+                <div className="text-sm font-bold font-mono tabular-nums bg-gradient-to-r from-accent to-accent-alt bg-clip-text text-transparent">
+                  <AnimatedNumber value={projected ? projected.totalSavings : r.totalSavings} format={fmt} />
                 </div>
               </div>
             </div>
