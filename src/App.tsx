@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { calculateSavings, TAX_CONSTANTS } from './taxCalculator';
 import type { SavingsInputs } from './taxCalculator';
 import { fmt } from './format';
@@ -34,26 +34,39 @@ const SCENARIO_PRESETS: ScenarioPreset[] = [
 
 type ScenarioState = Record<string, { active: boolean; amount: number }>;
 
+/* ── Persistence ───────────────────────────────────────────────────── */
+const STORAGE_KEY = 'cash-flow-inputs';
+
+const DEFAULT_INPUTS: SavingsInputs = {
+  annualSalary: 0,
+  annualBonus: 0,
+  annualRSU: 0,
+  traditional401k: 0,
+  afterTax401k: 0,
+  hsaEmployee: 0,
+  hsaEmployer: 0,
+  employerMatchPercent: 0,
+  irsCompLimit: TAX_CONSTANTS.retirement.employerCompLimit,
+  dentalPerPaycheck: 0,
+  medicalPerPaycheck: 0,
+  visionPerPaycheck: 0,
+  legalPerPaycheck: 0,
+  lifeInsPerPaycheck: 0,
+  payPeriodsPerYear: 24,
+  annualExpenses: 0,
+};
+
+function loadInputs(): SavingsInputs {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) return { ...DEFAULT_INPUTS, ...JSON.parse(stored) };
+  } catch { /* ignore bad data */ }
+  return DEFAULT_INPUTS;
+}
+
 /* ── Main App ──────────────────────────────────────────────────────── */
 function App() {
-  const [inputs, setInputs] = useState<SavingsInputs>({
-    annualSalary: 157914,
-    annualBonus: 20000,
-    annualRSU: 48000,
-    traditional401k: TAX_CONSTANTS.retirement.employee401k,
-    afterTax401k: TAX_CONSTANTS.retirement.afterTax401k,
-    hsaEmployee: 3900,
-    hsaEmployer: 500,
-    employerMatchPercent: 5,
-    irsCompLimit: TAX_CONSTANTS.retirement.employerCompLimit,
-    dentalPerPaycheck: 23.05,
-    medicalPerPaycheck: 24.87,
-    visionPerPaycheck: 1.37,
-    legalPerPaycheck: 11.88,
-    lifeInsPerPaycheck: 2.70,
-    payPeriodsPerYear: 24,
-    annualExpenses: 80000,
-  });
+  const [inputs, setInputs] = useState<SavingsInputs>(loadInputs);
 
   const [planOpen, setPlanOpen] = useState(false);
   const [taxOpen, setTaxOpen] = useState(false);
@@ -61,6 +74,10 @@ function App() {
   const [scenarios, setScenarios] = useState<ScenarioState>(() =>
     Object.fromEntries(SCENARIO_PRESETS.map((s) => [s.id, { active: false, amount: s.defaultAmount }])),
   );
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(inputs));
+  }, [inputs]);
 
   const set = (field: keyof SavingsInputs) => (v: number) =>
     setInputs((prev) => ({ ...prev, [field]: v }));
