@@ -8,9 +8,9 @@ export function Tip({ text }: { text: string }) {
         tabIndex={0}
         role="button"
         aria-describedby={id}
-        className="inline-flex items-center focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/40 rounded-full"
+        className="inline-flex items-center focus:outline-none focus-visible:ring-1 focus-visible:ring-accent/40 rounded-full"
       >
-        <svg className="w-3.5 h-3.5 text-white/20 group-hover/tip:text-white/50 group-focus-within/tip:text-white/50 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg className="w-3.5 h-3.5 text-faint group-hover/tip:text-caption group-focus-within/tip:text-caption transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <circle cx="12" cy="12" r="10" />
           <path d="M12 16v-4m0-4h.01" strokeLinecap="round" />
         </svg>

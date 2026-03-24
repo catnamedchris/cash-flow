@@ -1,5 +1,80 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-page: var(--page);
+  --color-panel: var(--panel);
+  --color-panel-alt: var(--panel-alt);
+  --color-panel-hover: var(--panel-hover);
+  --color-inset: var(--inset);
+  --color-input-field: var(--input-bg);
+  --color-input-focus: var(--input-focus);
+  --color-edge: var(--edge);
+  --color-edge-subtle: var(--edge-subtle);
+  --color-heading: var(--heading);
+  --color-strong: var(--strong);
+  --color-secondary: var(--secondary);
+  --color-caption: var(--caption);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-ghost: var(--ghost);
+  --color-accent: var(--accent);
+  --color-accent-alt: var(--accent-alt);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+}
+
+:root {
+  --page: #f8fafc;
+  --panel: #ffffff;
+  --panel-alt: #f8fafc;
+  --panel-hover: #f1f5f9;
+  --inset: #e2e8f0;
+  --input-bg: #f1f5f9;
+  --input-focus: #ffffff;
+  --edge: #e2e8f0;
+  --edge-subtle: #f1f5f9;
+  --heading: #0f172a;
+  --strong: #334155;
+  --secondary: #475569;
+  --secondary-rgb: 71, 85, 105;
+  --caption: #64748b;
+  --muted: #78859a;
+  --faint: #94a3b8;
+  --ghost: #cbd5e1;
+  --accent: #059669;
+  --accent-alt: #0891b2;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --info: #7c3aed;
+}
+
+.dark {
+  --page: #0a0b0f;
+  --panel: rgba(255, 255, 255, 0.03);
+  --panel-alt: rgba(255, 255, 255, 0.02);
+  --panel-hover: rgba(255, 255, 255, 0.04);
+  --inset: rgba(0, 0, 0, 0.3);
+  --input-bg: rgba(255, 255, 255, 0.04);
+  --input-focus: rgba(255, 255, 255, 0.07);
+  --edge: rgba(255, 255, 255, 0.06);
+  --edge-subtle: rgba(255, 255, 255, 0.04);
+  --heading: #ffffff;
+  --strong: rgba(255, 255, 255, 0.7);
+  --secondary: rgba(255, 255, 255, 0.6);
+  --caption: rgba(255, 255, 255, 0.5);
+  --muted: rgba(255, 255, 255, 0.3);
+  --faint: rgba(255, 255, 255, 0.2);
+  --ghost: rgba(255, 255, 255, 0.15);
+  --accent: #34d399;
+  --accent-alt: #22d3ee;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --info: #a78bfa;
+}
+
 /* Hide browser number input spinners */
 @layer base {
   input[type="number"]::-webkit-inner-spin-button,

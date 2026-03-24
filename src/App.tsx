@@ -8,6 +8,7 @@ import { Input } from './components/Input';
 import { Label } from './components/Label';
 import { Row } from './components/Row';
 import { ExpandableRow } from './components/ExpandableRow';
+import { ThemeToggle } from './components/ThemeToggle';
 
 /* ── Scenario Presets ──────────────────────────────────────────────── */
 interface ScenarioPreset {
@@ -109,9 +110,11 @@ function App() {
   const maxDollars = Math.max(0, ...rankedPresets.map((rp) => Math.abs(rp.dollarDelta)));
 
   return (
-    <div className="min-h-screen bg-[#0a0b0f] text-white selection:bg-emerald-500/30">
-      {/* Ambient glow */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+    <div className="min-h-screen bg-page text-heading selection:bg-accent/30">
+      <ThemeToggle />
+
+      {/* Ambient glow (dark mode only) */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden hidden dark:block">
         <div className="absolute top-[-40%] left-[-20%] w-[80%] h-[80%] rounded-full bg-emerald-500/[0.03] blur-[120px]" />
         <div className="absolute bottom-[-30%] right-[-10%] w-[60%] h-[60%] rounded-full bg-cyan-500/[0.02] blur-[100px]" />
       </div>
@@ -119,14 +122,14 @@ function App() {
       <div className="relative z-10">
         {/* Header */}
         <header className="text-center pt-12 sm:pt-16 pb-10 px-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-5">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-emerald-400">2026 Tax Year</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 border border-accent/20 mb-5">
+            <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-accent">2026 Tax Year</span>
           </div>
           <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight">
-            <span className="bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">Cash</span>
+            <span className="bg-gradient-to-b from-heading to-heading/60 bg-clip-text text-transparent">Cash</span>
             {' '}
-            <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">Flow</span>
+            <span className="bg-gradient-to-r from-accent to-accent-alt bg-clip-text text-transparent">Flow</span>
           </h1>
         </header>
 
@@ -134,7 +137,7 @@ function App() {
         <main className="max-w-5xl mx-auto px-4 sm:px-6 pb-20 grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
 
           {/* ── Input Form ── */}
-          <div className="lg:col-span-2 rounded-2xl bg-white/[0.03] border border-white/[0.06] p-5 sm:p-6 space-y-1">
+          <div className="lg:col-span-2 rounded-2xl bg-panel border border-edge p-5 sm:p-6 space-y-1">
             <Label first>Income</Label>
             <div className="space-y-3">
               <Input label="Salary" value={inputs.annualSalary} onChange={set('annualSalary')} prefix="$" placeholder="0" />
@@ -149,7 +152,7 @@ function App() {
             <div className="pt-5">
               <button
                 onClick={() => setPlanOpen(!planOpen)}
-                className="flex items-center gap-2 text-white/25 hover:text-white/50 text-[11px] font-semibold uppercase tracking-widest transition-colors cursor-pointer"
+                className="flex items-center gap-2 text-muted hover:text-caption text-[11px] font-semibold uppercase tracking-widest transition-colors cursor-pointer"
               >
                 <svg className={`w-3 h-3 transition-transform duration-200 ${planOpen ? 'rotate-90' : ''}`} fill="currentColor" viewBox="0 0 20 20">
                   <path d="M6.293 4.293a1 1 0 011.414 0L13.414 10l-5.707 5.707a1 1 0 01-1.414-1.414L10.586 10 6.293 5.707a1 1 0 010-1.414z" />
@@ -157,7 +160,7 @@ function App() {
                 Plan & Benefits
               </button>
               {!planOpen && (
-                <div className="text-[10px] text-white/15 mt-1.5 ml-5 font-mono tabular-nums">
+                <div className="text-[10px] text-faint mt-1.5 ml-5 font-mono tabular-nums">
                   401k {fmt(inputs.traditional401k ?? 0)} · HSA {fmt(inputs.hsaEmployee ?? 0)} · {inputs.employerMatchPercent ?? 0}% match
                 </div>
               )}
@@ -165,7 +168,7 @@ function App() {
                 <div className="overflow-hidden">
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-[11px] font-semibold uppercase tracking-widest text-white/30 mb-2">Retirement</label>
+                      <label className="block text-[11px] font-semibold uppercase tracking-widest text-muted mb-2">Retirement</label>
                       <div className="grid grid-cols-2 gap-3">
                         <Input label="401k" value={inputs.traditional401k} onChange={set('traditional401k')} prefix="$" />
                         <Input label="After-Tax 401k" value={inputs.afterTax401k} onChange={set('afterTax401k')} prefix="$" />
@@ -174,14 +177,14 @@ function App() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[11px] font-semibold uppercase tracking-widest text-white/30 mb-2">Employer Match</label>
+                      <label className="block text-[11px] font-semibold uppercase tracking-widest text-muted mb-2">Employer Match</label>
                       <div className="grid grid-cols-2 gap-3">
                         <Input label="Match %" value={inputs.employerMatchPercent} onChange={set('employerMatchPercent')} suffix="%" />
                         <Input label="Comp Limit" value={inputs.irsCompLimit} onChange={set('irsCompLimit')} prefix="$" />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[11px] font-semibold uppercase tracking-widest text-white/30 mb-2">Payroll Deductions</label>
+                      <label className="block text-[11px] font-semibold uppercase tracking-widest text-muted mb-2">Payroll Deductions</label>
                       <div className="grid grid-cols-2 gap-3">
                         <Input label="Dental" value={inputs.dentalPerPaycheck} onChange={set('dentalPerPaycheck')} prefix="$" />
                         <Input label="Medical" value={inputs.medicalPerPaycheck} onChange={set('medicalPerPaycheck')} prefix="$" />
@@ -210,9 +213,9 @@ function App() {
                     className={`rounded-xl border px-3 py-2 transition-all duration-200 ${
                       isActive
                         ? isExpense
-                          ? 'bg-amber-500/[0.06] border-amber-500/20'
-                          : 'bg-violet-500/[0.06] border-violet-500/20'
-                        : 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04]'
+                          ? 'bg-warning/[0.08] border-warning/20'
+                          : 'bg-info/[0.08] border-info/20'
+                        : 'bg-panel-alt border-edge hover:bg-panel-hover'
                     }`}
                   >
                     <button
@@ -223,35 +226,35 @@ function App() {
                         <div className="flex items-center gap-1.5 min-w-0">
                           <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
                             isActive
-                              ? isExpense ? 'border-amber-400 bg-amber-400' : 'border-violet-400 bg-violet-400'
-                              : 'border-white/20'
+                              ? isExpense ? 'border-warning bg-warning' : 'border-info bg-info'
+                              : 'border-faint'
                           }`}>
                             {isActive && (
-                              <svg className="w-1.5 h-1.5 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <svg className="w-1.5 h-1.5 text-white dark:text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                               </svg>
                             )}
                           </div>
                           <div className="min-w-0">
-                            <span className={`text-[12px] font-medium truncate block ${isActive ? 'text-white/80' : 'text-white/50'}`}>
+                            <span className={`text-[12px] font-medium truncate block ${isActive ? 'text-strong' : 'text-caption'}`}>
                               {preset.label}
                             </span>
-                            <span className="text-[10px] text-white/20 font-mono tabular-nums">
+                            <span className="text-[10px] text-faint font-mono tabular-nums">
                               {isExpense ? '−' : '+'}{preset.monthly ? `${fmt(state.amount)}/mo` : `${fmt(state.amount)}/yr`}
                             </span>
                           </div>
                         </div>
                         <span className={`text-[11px] font-mono tabular-nums font-semibold flex-shrink-0 ${
-                          isExpense ? 'text-amber-400/80' : 'text-violet-400/80'
+                          isExpense ? 'text-warning/80' : 'text-info/80'
                         }`}>
                           +{fmt(dollarDelta)}/yr
                         </span>
                       </div>
                       {/* Impact bar */}
-                      <div className="h-1 rounded-full bg-white/[0.04] overflow-hidden ml-4.5 mt-1.5">
+                      <div className="h-1 rounded-full bg-edge-subtle overflow-hidden ml-4.5 mt-1.5">
                         <div
                           className={`h-full rounded-full transition-all duration-500 ease-out ${
-                            isExpense ? 'bg-amber-400/40' : 'bg-violet-400/40'
+                            isExpense ? 'bg-warning/40' : 'bg-info/40'
                           }`}
                           style={{ width: `${barWidth}%` }}
                         />
@@ -261,7 +264,7 @@ function App() {
                     {isActive && (
                       <div className="mt-1.5 ml-4.5">
                         <div className="relative inline-flex items-center">
-                          <span className="absolute left-2 text-white/25 text-[11px] pointer-events-none">$</span>
+                          <span className="absolute left-2 text-faint text-[11px] pointer-events-none">$</span>
                           <input
                             type="number"
                             value={state.amount !== undefined && state.amount !== null ? state.amount : ''}
@@ -269,9 +272,9 @@ function App() {
                               const raw = e.target.value;
                               setAmount(preset.id, raw === '' ? 0 : Number(raw));
                             }}
-                            className="w-20 rounded-lg bg-black/30 border border-white/[0.08] text-white text-[11px] py-1 pl-5 pr-2 focus:outline-none focus:border-white/20 font-mono tabular-nums"
+                            className="w-20 rounded-lg bg-inset border border-edge text-heading text-[11px] py-1 pl-5 pr-2 focus:outline-none focus:border-faint font-mono tabular-nums"
                           />
-                          <span className="ml-1 text-[10px] text-white/25">{preset.monthly ? '/mo' : '/yr'}</span>
+                          <span className="ml-1 text-[10px] text-faint">{preset.monthly ? '/mo' : '/yr'}</span>
                         </div>
                       </div>
                     )}
@@ -283,7 +286,7 @@ function App() {
               <div className="flex justify-end pt-1">
                 <button
                   onClick={() => setScenarios(Object.fromEntries(SCENARIO_PRESETS.map((s) => [s.id, { active: false, amount: s.defaultAmount }])))}
-                  className="text-[10px] text-white/20 hover:text-white/40 transition-colors cursor-pointer"
+                  className="text-[10px] text-faint hover:text-muted transition-colors cursor-pointer"
                 >
                   Reset scenarios
                 </button>
@@ -299,10 +302,10 @@ function App() {
             return (
             <div className="lg:col-span-3 lg:sticky lg:top-6 space-y-5">
               {/* Ring Charts */}
-              <div className="rounded-2xl bg-white/[0.03] border border-white/[0.06] p-6 sm:p-8">
+              <div className="rounded-2xl bg-panel border border-edge p-6 sm:p-8">
                 {activeCount > 0 && (
                   <div className="flex items-center justify-center mb-4">
-                    <span className="text-[10px] font-semibold uppercase tracking-widest text-white/30">
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-muted">
                       {activeCount} scenario{activeCount > 1 ? 's' : ''} active
                     </span>
                   </div>
@@ -324,14 +327,14 @@ function App() {
                   />
                 </div>
                 {/* Total savings callout */}
-                <div className="mt-6 pt-5 border-t border-white/[0.04] text-center">
-                  <span className="text-white/30 text-xs font-semibold uppercase tracking-widest">Total Saved</span>
-                  <div className="text-2xl sm:text-3xl font-bold text-emerald-400 mt-1 font-mono tabular-nums transition-all duration-500">
+                <div className="mt-6 pt-5 border-t border-edge-subtle text-center">
+                  <span className="text-muted text-xs font-semibold uppercase tracking-widest">Total Saved</span>
+                  <div className="text-2xl sm:text-3xl font-bold text-accent mt-1 font-mono tabular-nums transition-all duration-500">
                     {fmt(projected ? projected.totalSavings : r.totalSavings)}
                   </div>
                   {projected ? (
                     <div className="mt-1 space-y-1">
-                      <span className="text-amber-400/70 text-xs font-mono tabular-nums font-semibold">
+                      <span className="text-warning/70 text-xs font-mono tabular-nums font-semibold">
                         +{fmt(savingsDelta)}/yr
                       </span>
                       {(() => {
@@ -340,8 +343,8 @@ function App() {
                           pmt * ((Math.pow(1 + rate, n) - 1) / rate);
                         const delta10 = fvAnnuity(projected.totalSavings, realReturn, 10) - fvAnnuity(r.totalSavings, realReturn, 10);
                         return (
-                          <div className="text-white/20 text-[11px] flex items-center justify-center gap-1">
-                            <span className="text-amber-400/50 font-mono tabular-nums">+{fmt(delta10)}</span>
+                          <div className="text-faint text-[11px] flex items-center justify-center gap-1">
+                            <span className="text-warning/50 font-mono tabular-nums">+{fmt(delta10)}</span>
                             <span>over 10yr at 7%</span>
                             <Tip text="Extra wealth accumulated over 10 years by investing the additional annual savings at a 7% real (inflation-adjusted) return." />
                           </div>
@@ -349,16 +352,16 @@ function App() {
                       })()}
                     </div>
                   ) : (
-                    <span className="text-white/20 text-xs mt-1 inline-flex items-center">per year <Tip text="Retirement savings plus non-retirement savings. This is the numerator for both savings rates." /></span>
+                    <span className="text-faint text-xs mt-1 inline-flex items-center">per year <Tip text="Retirement savings plus non-retirement savings. This is the numerator for both savings rates." /></span>
                   )}
                 </div>
               </div>
 
               {/* Breakdown */}
-              <div className="rounded-2xl bg-white/[0.03] border border-white/[0.06] p-5 sm:p-6">
+              <div className="rounded-2xl bg-panel border border-edge p-5 sm:p-6">
                 <div className="flex items-center gap-3 pb-3">
-                  <h3 className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/25">Breakdown</h3>
-                  <div className="flex-1 h-px bg-gradient-to-r from-white/[0.06] to-transparent" />
+                  <h3 className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted">Breakdown</h3>
+                  <div className="flex-1 h-px bg-gradient-to-r from-edge to-transparent" />
                 </div>
                 <div className="space-y-1">
                   <Row label="Gross Income" value={fmt(d.grossIncome)} bold tip="Total compensation before any taxes or deductions: salary + bonus + RSUs." delta={dl(r.grossIncome, d.grossIncome)} />
@@ -376,11 +379,11 @@ function App() {
 
                   <Row label="After-Tax Income" value={fmt(d.afterTaxIncome)} bold tip="Gross income minus all taxes. This is the denominator for your net savings rate — it represents all the money available to you before voluntary deductions." delta={dl(r.afterTaxIncome, d.afterTaxIncome)} />
 
-                  <div className="border-t border-white/[0.04] my-1" />
+                  <div className="border-t border-edge my-1" />
 
                   <Row label="Take-Home Pay" value={fmt(d.takeHomePay)} bold tip="What actually hits your bank account: gross income minus taxes, minus all pre-tax deductions (401k, HSA, insurance), minus post-tax deductions (after-tax 401k, legal, life insurance)." delta={dl(r.takeHomePay, d.takeHomePay)} />
 
-                  <div className="border-t border-white/[0.04] my-1" />
+                  <div className="border-t border-edge my-1" />
 
                   <ExpandableRow
                     label="Retirement Savings" value={fmt(d.retirementSavings)} green

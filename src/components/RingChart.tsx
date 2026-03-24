@@ -14,7 +14,7 @@ export function RingChart({ value, baseValue, label, tooltip, gradient }: { valu
     <div className="flex flex-col items-center gap-3">
       <div className="relative w-32 h-32 sm:w-36 sm:h-36">
         <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r="54" fill="none" stroke="currentColor" strokeWidth="8" className="text-white/[0.04]" />
+          <circle cx="60" cy="60" r="54" fill="none" stroke="currentColor" strokeWidth="8" className="text-edge-subtle" />
           {hasProjection && (
             <circle
               cx="60" cy="60" r="54" fill="none"
@@ -45,15 +45,15 @@ export function RingChart({ value, baseValue, label, tooltip, gradient }: { valu
           </defs>
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{pct(value)}</span>
+          <span className="text-2xl sm:text-3xl font-bold text-heading tracking-tight">{pct(value)}</span>
           {hasProjection && (
-            <span className="text-[10px] font-mono tabular-nums text-amber-400/80 font-semibold">
+            <span className="text-[10px] font-mono tabular-nums text-warning/80 font-semibold">
               +{(delta * 100).toFixed(1)}pp
             </span>
           )}
         </div>
       </div>
-      <span className="text-xs sm:text-sm text-slate-400 font-medium flex items-center gap-0.5">
+      <span className="text-xs sm:text-sm text-muted font-medium flex items-center gap-0.5">
         {label}
         <Tip text={tooltip} />
       </span>

@@ -9,10 +9,10 @@ export function Input({
   const id = useId();
   return (
     <div className="space-y-1.5">
-      <label htmlFor={id} className="block text-[11px] font-semibold uppercase tracking-widest text-white/30">{label}</label>
+      <label htmlFor={id} className="block text-[11px] font-semibold uppercase tracking-widest text-muted">{label}</label>
       <div className="relative group">
         {prefix && (
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/25 text-sm pointer-events-none">{prefix}</span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-faint text-sm pointer-events-none">{prefix}</span>
         )}
         <input
           id={id}
@@ -23,12 +23,12 @@ export function Input({
             const raw = e.target.value;
             onChange(raw === '' ? 0 : Number(raw));
           }}
-          className={`w-full rounded-xl bg-white/[0.04] border border-white/[0.06] text-white placeholder-white/15 py-3 text-sm focus:outline-none focus:bg-white/[0.07] focus:border-emerald-500/30 focus:ring-1 focus:ring-emerald-500/20 transition-all duration-200 ${
+          className={`w-full rounded-xl bg-input-field border border-edge text-heading placeholder:text-ghost py-3 text-sm focus:outline-none focus:bg-input-focus focus:border-accent/30 focus:ring-1 focus:ring-accent/20 transition-all duration-200 ${
             prefix ? 'pl-7 pr-3' : suffix ? 'pl-3 pr-8' : 'px-3'
           }`}
         />
         {suffix && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 text-sm pointer-events-none">{suffix}</span>
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-faint text-sm pointer-events-none">{suffix}</span>
         )}
       </div>
     </div>
