@@ -394,7 +394,7 @@ function App() {
               {/* Breakdown */}
               <div className="rounded-2xl bg-panel border border-edge p-5 sm:p-6 shadow-sm dark:shadow-none animate-[slideUp_0.6s_ease-out]">
                 <div className="flex items-center gap-3 pb-3">
-                  <h3 className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted">Breakdown</h3>
+                  <h3 className="text-[13px] font-bold uppercase tracking-[0.12em] text-caption">Breakdown</h3>
                   <div className="flex-1 h-px bg-gradient-to-r from-edge to-transparent" />
                 </div>
                 <div className="space-y-1">
