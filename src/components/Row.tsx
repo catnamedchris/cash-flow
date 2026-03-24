@@ -10,7 +10,7 @@ export function Row({
   const hasDelta = delta !== undefined && Math.abs(delta) >= 1;
 
   return (
-    <div className={`flex justify-between items-center py-2 rounded-lg transition-colors duration-150 hover:bg-panel-hover ${sub ? 'pl-5' : 'px-1.5'}`}>
+    <div className={`flex justify-between items-center py-2 rounded-lg transition-colors duration-150 hover:bg-panel-hover ${sub ? 'pl-5 pr-1.5' : 'px-1.5'}`}>
       <span className={`text-[13px] flex items-center ${sub ? 'text-caption' : bold ? 'text-strong font-medium' : 'text-caption'}`}>
         {label}
         {tip && <Tip text={tip} />}
