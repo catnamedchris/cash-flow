@@ -25,6 +25,15 @@ export function RingChart({ value, baseValue, label, tooltip, gradient }: { valu
               className="transition-all duration-700 ease-out opacity-20"
             />
           )}
+          {/* Glow layer */}
+          <circle
+            cx="60" cy="60" r="54" fill="none"
+            strokeWidth="12" strokeLinecap="round"
+            stroke={`url(#${gradient})`}
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            className="transition-all duration-700 ease-out opacity-[0.15] blur-[3px]"
+          />
           <circle
             cx="60" cy="60" r="54" fill="none"
             strokeWidth="8" strokeLinecap="round"

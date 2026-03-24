@@ -18,10 +18,10 @@ export function Tip({ text }: { text: string }) {
       <span
         id={id}
         role="tooltip"
-        className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 px-3.5 py-2.5 rounded-xl bg-slate-900/95 backdrop-blur border border-white/10 text-[11px] text-slate-300 leading-relaxed w-60 text-left shadow-2xl shadow-black/40 opacity-0 scale-95 pointer-events-none group-hover/tip:opacity-100 group-hover/tip:scale-100 group-hover/tip:pointer-events-auto group-focus-within/tip:opacity-100 group-focus-within/tip:scale-100 group-focus-within/tip:pointer-events-auto transition-all duration-150 z-50"
+        className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 px-3.5 py-2.5 rounded-xl bg-slate-900/95 dark:bg-slate-800/95 backdrop-blur border border-white/10 text-[11px] text-slate-300 leading-relaxed w-60 text-left shadow-2xl shadow-black/40 opacity-0 scale-95 pointer-events-none group-hover/tip:opacity-100 group-hover/tip:scale-100 group-hover/tip:pointer-events-auto group-focus-within/tip:opacity-100 group-focus-within/tip:scale-100 group-focus-within/tip:pointer-events-auto transition-all duration-150 z-50"
       >
         {text}
-        <span className="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-slate-900/95" />
+        <span className="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-slate-900/95 dark:border-t-slate-800/95" />
       </span>
     </span>
   );

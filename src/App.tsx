@@ -9,6 +9,9 @@ import { Label } from './components/Label';
 import { Row } from './components/Row';
 import { ExpandableRow } from './components/ExpandableRow';
 import { ThemeToggle } from './components/ThemeToggle';
+import { AnimatedNumber } from './components/AnimatedNumber';
+import { EmptyState } from './components/EmptyState';
+import { Milestone } from './components/Milestone';
 
 /* ── Scenario Presets ──────────────────────────────────────────────── */
 interface ScenarioPreset {
@@ -109,14 +112,30 @@ function App() {
 
   const maxDollars = Math.max(0, ...rankedPresets.map((rp) => Math.abs(rp.dollarDelta)));
 
+  const [titleClicks, setTitleClicks] = useState(0);
+  const easterEgg = titleClicks >= 5;
+
+  const tagline = useMemo(() => {
+    if (!r) return '';
+    const rate = projected ? projected.netSavingsRate : r.netSavingsRate;
+    if (rate >= 0.7) return 'Legendary status.';
+    if (rate >= 0.5) return 'Financial freedom awaits.';
+    if (rate >= 0.4) return 'Building serious wealth.';
+    if (rate >= 0.3) return 'Ahead of the curve.';
+    if (rate >= 0.2) return 'Solid foundation.';
+    if (rate >= 0.1) return 'Every dollar counts.';
+    return 'Room to grow.';
+  }, [r, projected]);
+
   return (
     <div className="min-h-screen bg-page text-heading selection:bg-accent/30">
       <ThemeToggle />
 
       {/* Ambient glow (dark mode only) */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden hidden dark:block">
-        <div className="absolute top-[-40%] left-[-20%] w-[80%] h-[80%] rounded-full bg-emerald-500/[0.03] blur-[120px]" />
-        <div className="absolute bottom-[-30%] right-[-10%] w-[60%] h-[60%] rounded-full bg-cyan-500/[0.02] blur-[100px]" />
+        <div className="absolute top-[-40%] left-[-20%] w-[80%] h-[80%] rounded-full bg-emerald-500/[0.04] blur-[120px]" />
+        <div className="absolute bottom-[-30%] right-[-10%] w-[60%] h-[60%] rounded-full bg-cyan-500/[0.03] blur-[100px]" />
+        <div className="absolute top-[20%] right-[-30%] w-[50%] h-[50%] rounded-full bg-violet-500/[0.02] blur-[100px]" />
       </div>
 
       <div className="relative z-10">
@@ -126,18 +145,31 @@ function App() {
             <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
             <span className="text-[11px] font-semibold uppercase tracking-widest text-accent">2026 Tax Year</span>
           </div>
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight">
-            <span className="bg-gradient-to-b from-heading to-heading/60 bg-clip-text text-transparent">Cash</span>
+          <h1
+            className="text-3xl sm:text-5xl font-extrabold tracking-tight cursor-default select-none"
+            onClick={() => setTitleClicks((c) => c + 1)}
+          >
+            <span className="bg-gradient-to-b from-heading to-heading/50 bg-clip-text text-transparent">Cash</span>
             {' '}
-            <span className="bg-gradient-to-r from-accent to-accent-alt bg-clip-text text-transparent">Flow</span>
+            <span className={`bg-gradient-to-r from-accent via-accent-alt to-accent bg-[length:200%_100%] bg-clip-text text-transparent ${easterEgg ? 'animate-[shimmer_1.5s_ease-in-out_infinite]' : 'animate-[shimmer_6s_ease-in-out_infinite]'}`}>Flow</span>
           </h1>
+          {easterEgg && (
+            <p className="text-[11px] text-accent/60 mt-2 animate-[fadeIn_0.5s_ease-out] font-mono">
+              ✶ you found the secret ✶
+            </p>
+          )}
+          {tagline && (
+            <p className="text-sm text-muted mt-3 animate-[fadeIn_0.6s_ease-out] font-medium tracking-wide">
+              {tagline}
+            </p>
+          )}
         </header>
 
         {/* Main */}
-        <main className="max-w-5xl mx-auto px-4 sm:px-6 pb-20 grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
+        <main className="max-w-5xl mx-auto px-4 sm:px-6 pb-24 lg:pb-20 grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
 
           {/* ── Input Form ── */}
-          <div className="lg:col-span-2 rounded-2xl bg-panel border border-edge p-5 sm:p-6 space-y-1">
+          <div className="lg:col-span-2 rounded-2xl bg-panel border border-edge p-5 sm:p-6 space-y-1 shadow-sm dark:shadow-none dark:border-edge">
             <Label first>Income</Label>
             <div className="space-y-3">
               <Input label="Salary" value={inputs.annualSalary} onChange={set('annualSalary')} prefix="$" placeholder="0" />
@@ -220,7 +252,7 @@ function App() {
                   >
                     <button
                       onClick={() => toggle(preset.id)}
-                      className="w-full text-left cursor-pointer group"
+                      className="w-full text-left cursor-pointer group active:scale-[0.98] transition-transform duration-150"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-1.5 min-w-0">
@@ -295,6 +327,7 @@ function App() {
           </div>
 
           {/* ── Results ── */}
+          {!r && <EmptyState />}
           {r && (() => {
             const d = projected ?? r;
             const dl = (base: number, proj: number) => projected ? proj - base : undefined;
@@ -302,7 +335,7 @@ function App() {
             return (
             <div className="lg:col-span-3 lg:sticky lg:top-6 space-y-5">
               {/* Ring Charts */}
-              <div className="rounded-2xl bg-panel border border-edge p-6 sm:p-8">
+              <div className="rounded-2xl bg-panel border border-edge p-6 sm:p-8 shadow-sm dark:shadow-[0_0_40px_rgba(52,211,153,0.04)] animate-[slideUp_0.5s_ease-out]">
                 {activeCount > 0 && (
                   <div className="flex items-center justify-center mb-4">
                     <span className="text-[10px] font-semibold uppercase tracking-widest text-muted">
@@ -329,13 +362,13 @@ function App() {
                 {/* Total savings callout */}
                 <div className="mt-6 pt-5 border-t border-edge-subtle text-center">
                   <span className="text-muted text-xs font-semibold uppercase tracking-widest">Total Saved</span>
-                  <div className="text-2xl sm:text-3xl font-bold text-accent mt-1 font-mono tabular-nums transition-all duration-500">
-                    {fmt(projected ? projected.totalSavings : r.totalSavings)}
+                  <div className="text-2xl sm:text-3xl font-bold mt-1 font-mono tabular-nums bg-gradient-to-r from-accent to-accent-alt bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(5,150,105,0.3)] dark:drop-shadow-[0_0_24px_rgba(52,211,153,0.25)]">
+                    <AnimatedNumber value={projected ? projected.totalSavings : r.totalSavings} format={fmt} />
                   </div>
                   {projected ? (
                     <div className="mt-1 space-y-1">
                       <span className="text-warning/70 text-xs font-mono tabular-nums font-semibold">
-                        +{fmt(savingsDelta)}/yr
+                        +<AnimatedNumber value={savingsDelta} format={fmt} />/yr
                       </span>
                       {(() => {
                         const realReturn = 0.07;
@@ -344,7 +377,7 @@ function App() {
                         const delta10 = fvAnnuity(projected.totalSavings, realReturn, 10) - fvAnnuity(r.totalSavings, realReturn, 10);
                         return (
                           <div className="text-faint text-[11px] flex items-center justify-center gap-1">
-                            <span className="text-warning/50 font-mono tabular-nums">+{fmt(delta10)}</span>
+                            <span className="text-warning/50 font-mono tabular-nums">+<AnimatedNumber value={delta10} format={fmt} /></span>
                             <span>over 10yr at 7%</span>
                             <Tip text="Extra wealth accumulated over 10 years by investing the additional annual savings at a 7% real (inflation-adjusted) return." />
                           </div>
@@ -354,34 +387,35 @@ function App() {
                   ) : (
                     <span className="text-faint text-xs mt-1 inline-flex items-center">per year <Tip text="Retirement savings plus non-retirement savings. This is the numerator for both savings rates." /></span>
                   )}
+                  <Milestone rate={projected ? projected.netSavingsRate : r.netSavingsRate} />
                 </div>
               </div>
 
               {/* Breakdown */}
-              <div className="rounded-2xl bg-panel border border-edge p-5 sm:p-6">
+              <div className="rounded-2xl bg-panel border border-edge p-5 sm:p-6 shadow-sm dark:shadow-none animate-[slideUp_0.6s_ease-out]">
                 <div className="flex items-center gap-3 pb-3">
                   <h3 className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted">Breakdown</h3>
                   <div className="flex-1 h-px bg-gradient-to-r from-edge to-transparent" />
                 </div>
                 <div className="space-y-1">
-                  <Row label="Gross Income" value={fmt(d.grossIncome)} bold tip="Total compensation before any taxes or deductions: salary + bonus + RSUs." delta={dl(r.grossIncome, d.grossIncome)} />
+                  <Row label="Gross Income" value={d.grossIncome} bold tip="Total compensation before any taxes or deductions: salary + bonus + RSUs." delta={dl(r.grossIncome, d.grossIncome)} />
 
                   <ExpandableRow
                     label="Total Taxes" value={`−${fmt(d.totalTaxes)}`} red
                     open={taxOpen} onToggle={() => setTaxOpen(!taxOpen)}
                   >
-                    <Row label="Federal" value={fmt(d.federalTax)} sub delta={dl(r.federalTax, d.federalTax)} />
-                    <Row label="California" value={fmt(d.stateTax)} sub delta={dl(r.stateTax, d.stateTax)} />
-                    <Row label="Social Security" value={fmt(d.socialSecurity)} sub delta={dl(r.socialSecurity, d.socialSecurity)} />
-                    <Row label="Medicare" value={fmt(d.medicare)} sub delta={dl(r.medicare, d.medicare)} />
-                    <Row label="CA SDI" value={fmt(d.caSDI)} sub delta={dl(r.caSDI, d.caSDI)} />
+                    <Row label="Federal" value={d.federalTax} sub delta={dl(r.federalTax, d.federalTax)} />
+                    <Row label="California" value={d.stateTax} sub delta={dl(r.stateTax, d.stateTax)} />
+                    <Row label="Social Security" value={d.socialSecurity} sub delta={dl(r.socialSecurity, d.socialSecurity)} />
+                    <Row label="Medicare" value={d.medicare} sub delta={dl(r.medicare, d.medicare)} />
+                    <Row label="CA SDI" value={d.caSDI} sub delta={dl(r.caSDI, d.caSDI)} />
                   </ExpandableRow>
 
-                  <Row label="After-Tax Income" value={fmt(d.afterTaxIncome)} bold tip="Gross income minus all taxes. This is the denominator for your net savings rate — it represents all the money available to you before voluntary deductions." delta={dl(r.afterTaxIncome, d.afterTaxIncome)} />
+                  <Row label="After-Tax Income" value={d.afterTaxIncome} bold tip="Gross income minus all taxes. This is the denominator for your net savings rate — it represents all the money available to you before voluntary deductions." delta={dl(r.afterTaxIncome, d.afterTaxIncome)} />
 
                   <div className="border-t border-edge my-1" />
 
-                  <Row label="Take-Home Pay" value={fmt(d.takeHomePay)} bold tip="What actually hits your bank account: gross income minus taxes, minus all pre-tax deductions (401k, HSA, insurance), minus post-tax deductions (after-tax 401k, legal, life insurance)." delta={dl(r.takeHomePay, d.takeHomePay)} />
+                  <Row label="Take-Home Pay" value={d.takeHomePay} bold tip="What actually hits your bank account: gross income minus taxes, minus all pre-tax deductions (401k, HSA, insurance), minus post-tax deductions (after-tax 401k, legal, life insurance)." delta={dl(r.takeHomePay, d.takeHomePay)} />
 
                   <div className="border-t border-edge my-1" />
 
@@ -390,21 +424,55 @@ function App() {
                     open={retOpen} onToggle={() => setRetOpen(!retOpen)}
                     tip="Sum of all tax-advantaged contributions: 401k, mega backdoor Roth, HSA (employee + employer), and employer match."
                   >
-                    <Row label="Traditional 401k" value={fmt(inputs.traditional401k ?? 0)} sub />
-                    <Row label="Mega Backdoor Roth" value={fmt(inputs.afterTax401k ?? 0)} sub />
-                    <Row label="HSA (Employee)" value={fmt(inputs.hsaEmployee ?? 0)} sub />
-                    <Row label="HSA (Employer)" value={fmt(inputs.hsaEmployer ?? 0)} sub />
-                    <Row label="Employer Match" value={fmt(d.employerMatch)} sub delta={dl(r.employerMatch, d.employerMatch)} />
+                    <Row label="Traditional 401k" value={inputs.traditional401k ?? 0} sub />
+                    <Row label="Mega Backdoor Roth" value={inputs.afterTax401k ?? 0} sub />
+                    <Row label="HSA (Employee)" value={inputs.hsaEmployee ?? 0} sub />
+                    <Row label="HSA (Employer)" value={inputs.hsaEmployer ?? 0} sub />
+                    <Row label="Employer Match" value={d.employerMatch} sub delta={dl(r.employerMatch, d.employerMatch)} />
                   </ExpandableRow>
 
-                  <Row label="Non-Retirement Savings" value={fmt(d.nonRetirementSavings)} green tip="Take-home pay minus annual expenses. This is money left over for brokerage accounts or other non-tax-advantaged savings." delta={dl(r.nonRetirementSavings, d.nonRetirementSavings)} />
+                  <Row label="Non-Retirement Savings" value={d.nonRetirementSavings} green tip="Take-home pay minus annual expenses. This is money left over for brokerage accounts or other non-tax-advantaged savings." delta={dl(r.nonRetirementSavings, d.nonRetirementSavings)} />
                 </div>
               </div>
             </div>
             );
           })()}
         </main>
+
+        {/* Mobile sticky bottom bar */}
+        {r && (
+          <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden">
+            <div className="bg-panel/90 backdrop-blur-xl border-t border-edge px-4 py-3 flex items-center justify-around">
+              <div className="text-center">
+                <div className="text-[9px] font-semibold uppercase tracking-widest text-muted">Saved</div>
+                <div className="text-sm font-bold font-mono tabular-nums bg-gradient-to-r from-accent to-accent-alt bg-clip-text text-transparent">
+                  <AnimatedNumber value={projected ? projected.totalSavings : r.totalSavings} format={fmt} />
+                </div>
+              </div>
+              <div className="w-px h-6 bg-edge" />
+              <div className="text-center">
+                <div className="text-[9px] font-semibold uppercase tracking-widest text-muted">Net Rate</div>
+                <div className="text-sm font-bold font-mono tabular-nums text-heading">
+                  <AnimatedNumber
+                    value={(projected ? projected.netSavingsRate : r.netSavingsRate) * 100}
+                    format={(n) => `${n.toFixed(1)}%`}
+                  />
+                </div>
+              </div>
+              <div className="w-px h-6 bg-edge" />
+              <div className="text-center">
+                <div className="text-[9px] font-semibold uppercase tracking-widest text-muted">Take Home</div>
+                <div className="text-sm font-bold font-mono tabular-nums text-heading">
+                  <AnimatedNumber value={projected ? projected.takeHomePay : r.takeHomePay} format={fmt} />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Mobile bottom spacer */}
+      {r && <div className="h-16 lg:hidden" />}
     </div>
   );
 }

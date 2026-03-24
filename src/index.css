@@ -75,6 +75,31 @@
   --info: #a78bfa;
 }
 
+/* Shimmer animation for gradient text */
+@keyframes shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Smooth theme transitions */
+html.theme-transitioning,
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+  transition: background-color 0.5s ease, color 0.3s ease, border-color 0.4s ease,
+    box-shadow 0.4s ease, opacity 0.3s ease !important;
+}
+
 /* Hide browser number input spinners */
 @layer base {
   input[type="number"]::-webkit-inner-spin-button,

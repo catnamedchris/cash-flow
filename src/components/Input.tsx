@@ -23,7 +23,7 @@ export function Input({
             const raw = e.target.value;
             onChange(raw === '' ? 0 : Number(raw));
           }}
-          className={`w-full rounded-xl bg-input-field border border-edge text-heading placeholder:text-ghost py-3 text-sm focus:outline-none focus:bg-input-focus focus:border-accent/30 focus:ring-1 focus:ring-accent/20 transition-all duration-200 ${
+          className={`w-full rounded-xl bg-input-field border border-edge text-heading placeholder:text-ghost py-3 text-sm focus:outline-none focus:bg-input-focus focus:border-accent/30 focus:ring-2 focus:ring-accent/15 focus:shadow-[0_0_16px_rgba(5,150,105,0.08)] dark:focus:shadow-[0_0_20px_rgba(52,211,153,0.06)] transition-all duration-300 ${
             prefix ? 'pl-7 pr-3' : suffix ? 'pl-3 pr-8' : 'px-3'
           }`}
         />
