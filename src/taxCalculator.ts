@@ -176,8 +176,12 @@ export function calculateSavings(inputs: SavingsInputs): SavingsResults {
 
   // Employer match: based on salary + bonus (not RSU), capped at IRS comp limit
   const eligibleComp = annualSalary + annualBonus;
-  const employerMatch =
+  const uncappedEmployerMatch =
     Math.round(Math.min(eligibleComp, irsCompLimit) * (employerMatchPercent / 100) * 100) / 100;
+
+  // Enforce IRS 415(c) limit on total employer plan contributions
+  const total415c = TAX_CONSTANTS.retirement.total415c;
+  const employerMatch = Math.min(uncappedEmployerMatch, Math.max(0, total415c - traditional401k - afterTax401k));
 
   // Section 125 cafeteria plan deductions (pre-tax, exempt from income tax AND FICA)
   const annualDental = dentalPerPaycheck * payPeriodsPerYear;
@@ -198,9 +202,10 @@ export function calculateSavings(inputs: SavingsInputs): SavingsResults {
     grossIncome - preTaxDeductions - TAX_CONSTANTS.federal.standardDeduction;
   const federalTax = calculateFederalTax(federalTaxableIncome);
 
-  // California tax: gross income minus pre-tax deductions minus CA standard deduction
+  // California tax: CA does not recognize HSA as pre-tax, and employer HSA is taxable imputed income
+  const caPreTaxDeductions = traditional401k + cafeteriaPlanDeductions;
   const caTaxableIncome =
-    grossIncome - preTaxDeductions - TAX_CONSTANTS.california.standardDeduction;
+    grossIncome - caPreTaxDeductions + hsaEmployer - TAX_CONSTANTS.california.standardDeduction;
   const stateTax = calculateCATax(caTaxableIncome);
 
   // FICA wages: gross income minus HSA employee minus cafeteria plan deductions

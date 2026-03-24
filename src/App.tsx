@@ -1,185 +1,13 @@
 import { useState, useMemo } from 'react';
 import { calculateSavings, TAX_CONSTANTS } from './taxCalculator';
 import type { SavingsInputs } from './taxCalculator';
-
-const fmt = (n: number) =>
-  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
-const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
-
-/* ── Tooltip ──────────────────────────────────────────────────────── */
-function Tip({ text }: { text: string }) {
-  return (
-    <span className="relative group/tip inline-flex items-center ml-1.5 cursor-help">
-      <svg className="w-3.5 h-3.5 text-white/20 group-hover/tip:text-white/50 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <circle cx="12" cy="12" r="10" />
-        <path d="M12 16v-4m0-4h.01" strokeLinecap="round" />
-      </svg>
-      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 px-3.5 py-2.5 rounded-xl bg-slate-900/95 backdrop-blur border border-white/10 text-[11px] text-slate-300 leading-relaxed w-60 text-left shadow-2xl shadow-black/40 opacity-0 scale-95 pointer-events-none group-hover/tip:opacity-100 group-hover/tip:scale-100 group-hover/tip:pointer-events-auto transition-all duration-150 z-50">
-        {text}
-        <span className="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-slate-900/95" />
-      </span>
-    </span>
-  );
-}
-
-/* ── Ring Chart ────────────────────────────────────────────────────── */
-function RingChart({ value, baseValue, label, tooltip, gradient }: { value: number; baseValue?: number; label: string; tooltip: string; gradient: string }) {
-  const clamped = Math.min(Math.max(value, 0), 1);
-  const circumference = 2 * Math.PI * 54;
-  const offset = circumference * (1 - clamped);
-  const hasProjection = baseValue !== undefined && baseValue !== value;
-  const baseClamped = hasProjection ? Math.min(Math.max(baseValue, 0), 1) : 0;
-  const baseOffset = circumference * (1 - baseClamped);
-  const delta = hasProjection ? value - baseValue : 0;
-
-  return (
-    <div className="flex flex-col items-center gap-3">
-      <div className="relative w-32 h-32 sm:w-36 sm:h-36">
-        <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r="54" fill="none" stroke="currentColor" strokeWidth="8" className="text-white/[0.04]" />
-          {hasProjection && (
-            <circle
-              cx="60" cy="60" r="54" fill="none"
-              strokeWidth="8" strokeLinecap="round"
-              stroke={`url(#${gradient})`}
-              strokeDasharray={circumference}
-              strokeDashoffset={baseOffset}
-              className="transition-all duration-700 ease-out opacity-20"
-            />
-          )}
-          <circle
-            cx="60" cy="60" r="54" fill="none"
-            strokeWidth="8" strokeLinecap="round"
-            stroke={`url(#${gradient})`}
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            className="transition-all duration-700 ease-out"
-          />
-          <defs>
-            <linearGradient id="ring-green" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#34d399" />
-              <stop offset="100%" stopColor="#059669" />
-            </linearGradient>
-            <linearGradient id="ring-cyan" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#22d3ee" />
-              <stop offset="100%" stopColor="#06b6d4" />
-            </linearGradient>
-          </defs>
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{pct(value)}</span>
-          {hasProjection && (
-            <span className="text-[10px] font-mono tabular-nums text-amber-400/80 font-semibold">
-              +{(delta * 100).toFixed(1)}pp
-            </span>
-          )}
-        </div>
-      </div>
-      <span className="text-xs sm:text-sm text-slate-400 font-medium flex items-center gap-0.5">
-        {label}
-        <Tip text={tooltip} />
-      </span>
-    </div>
-  );
-}
-
-/* ── Input ─────────────────────────────────────────────────────────── */
-function Input({
-  label, value, onChange, prefix, suffix, placeholder,
-}: {
-  label: string; value: number; onChange: (v: number) => void;
-  prefix?: string; suffix?: string; placeholder?: string;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <label className="block text-[11px] font-semibold uppercase tracking-widest text-white/30">{label}</label>
-      <div className="relative group">
-        {prefix && (
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/25 text-sm pointer-events-none">{prefix}</span>
-        )}
-        <input
-          type="number"
-          value={value || ''}
-          placeholder={placeholder}
-          onChange={(e) => onChange(Number(e.target.value) || 0)}
-          className={`w-full rounded-xl bg-white/[0.04] border border-white/[0.06] text-white placeholder-white/15 py-3 text-sm focus:outline-none focus:bg-white/[0.07] focus:border-emerald-500/30 focus:ring-1 focus:ring-emerald-500/20 transition-all duration-200 ${
-            prefix ? 'pl-7 pr-3' : suffix ? 'pl-3 pr-8' : 'px-3'
-          }`}
-        />
-        {suffix && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 text-sm pointer-events-none">{suffix}</span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ── Section Label ─────────────────────────────────────────────────── */
-function Label({ children, first }: { children: React.ReactNode; first?: boolean }) {
-  return (
-    <div className={`flex items-center gap-3 ${first ? '' : 'pt-6'} pb-2`}>
-      <h3 className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/40">{children}</h3>
-      <div className="flex-1 h-px bg-gradient-to-r from-white/[0.06] to-transparent" />
-    </div>
-  );
-}
-
-/* ── Result Row ────────────────────────────────────────────────────── */
-function Row({
-  label, value, sub, green, bold, tip, red, delta,
-}: {
-  label: string; value: string; sub?: boolean; green?: boolean; bold?: boolean; tip?: string; red?: boolean; delta?: number;
-}) {
-  const hasDelta = delta !== undefined && Math.abs(delta) >= 1;
-  return (
-    <div className={`flex justify-between items-center py-2 ${sub ? 'pl-5' : ''}`}>
-      <span className={`text-[13px] flex items-center ${sub ? 'text-white/30' : bold ? 'text-white/70 font-medium' : 'text-white/50'}`}>
-        {label}
-        {tip && <Tip text={tip} />}
-      </span>
-      <span className={`text-[13px] font-mono tabular-nums flex items-center gap-2 ${
-        green ? 'text-emerald-400 font-semibold' : red ? 'text-red-400/80 font-medium' : bold ? 'text-white font-semibold' : 'text-white/60'
-      }`}>
-        {value}
-        {hasDelta && (
-          <span className="text-[11px] text-amber-400/70 font-medium">
-            {delta > 0 ? '+' : ''}{fmt(delta)}
-          </span>
-        )}
-      </span>
-    </div>
-  );
-}
-
-/* ── Expandable Row ────────────────────────────────────────────────── */
-function ExpandableRow({
-  label, value, open, onToggle, children, green, red, tip,
-}: {
-  label: string; value: string; open: boolean; onToggle: () => void;
-  children: React.ReactNode; green?: boolean; red?: boolean; tip?: string;
-}) {
-  return (
-    <div>
-      <button onClick={onToggle} className="flex justify-between items-center w-full py-2 cursor-pointer group">
-        <span className="text-[13px] text-white/50 group-hover:text-white/70 transition-colors flex items-center gap-1.5">
-          <svg className={`w-3 h-3 text-white/20 transition-transform duration-200 ${open ? 'rotate-90' : ''}`} fill="currentColor" viewBox="0 0 20 20">
-            <path d="M6.293 4.293a1 1 0 011.414 0L13.414 10l-5.707 5.707a1 1 0 01-1.414-1.414L10.586 10 6.293 5.707a1 1 0 010-1.414z" />
-          </svg>
-          {label}
-          {tip && <Tip text={tip} />}
-        </span>
-        <span className={`text-[13px] font-mono tabular-nums font-medium ${green ? 'text-emerald-400' : red ? 'text-red-400/80' : 'text-white/60'}`}>
-          {value}
-        </span>
-      </button>
-      <div className={`overflow-hidden transition-all duration-300 ${open ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0'}`}>
-        <div className="border-l border-white/[0.04] ml-1.5">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-}
+import { fmt } from './format';
+import { Tip } from './components/Tip';
+import { RingChart } from './components/RingChart';
+import { Input } from './components/Input';
+import { Label } from './components/Label';
+import { Row } from './components/Row';
+import { ExpandableRow } from './components/ExpandableRow';
 
 /* ── Scenario Presets ──────────────────────────────────────────────── */
 interface ScenarioPreset {
@@ -296,9 +124,9 @@ function App() {
             <span className="text-[11px] font-semibold uppercase tracking-widest text-emerald-400">2026 Tax Year</span>
           </div>
           <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight">
-            <span className="bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">Savings Rate</span>
-            <br />
-            <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">Calculator</span>
+            <span className="bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">Cash</span>
+            {' '}
+            <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">Flow</span>
           </h1>
         </header>
 
@@ -330,36 +158,38 @@ function App() {
               </button>
               {!planOpen && (
                 <div className="text-[10px] text-white/15 mt-1.5 ml-5 font-mono tabular-nums">
-                  401k {fmt(inputs.traditional401k)} · HSA {fmt(inputs.hsaEmployee)} · {inputs.employerMatchPercent}% match
+                  401k {fmt(inputs.traditional401k ?? 0)} · HSA {fmt(inputs.hsaEmployee ?? 0)} · {inputs.employerMatchPercent ?? 0}% match
                 </div>
               )}
-              <div className={`overflow-hidden transition-all duration-300 ${planOpen ? 'max-h-[800px] opacity-100 mt-3' : 'max-h-0 opacity-0'}`}>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-widest text-white/30 mb-2">Retirement</label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Input label="401k" value={inputs.traditional401k} onChange={set('traditional401k')} prefix="$" />
-                      <Input label="After-Tax 401k" value={inputs.afterTax401k} onChange={set('afterTax401k')} prefix="$" />
-                      <Input label="HSA (You)" value={inputs.hsaEmployee} onChange={set('hsaEmployee')} prefix="$" />
-                      <Input label="HSA (Employer)" value={inputs.hsaEmployer} onChange={set('hsaEmployer')} prefix="$" />
+              <div className={`grid transition-all duration-300 ${planOpen ? 'grid-rows-[1fr] opacity-100 mt-3' : 'grid-rows-[0fr] opacity-0'}`}>
+                <div className="overflow-hidden">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase tracking-widest text-white/30 mb-2">Retirement</label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Input label="401k" value={inputs.traditional401k} onChange={set('traditional401k')} prefix="$" />
+                        <Input label="After-Tax 401k" value={inputs.afterTax401k} onChange={set('afterTax401k')} prefix="$" />
+                        <Input label="HSA (You)" value={inputs.hsaEmployee} onChange={set('hsaEmployee')} prefix="$" />
+                        <Input label="HSA (Employer)" value={inputs.hsaEmployer} onChange={set('hsaEmployer')} prefix="$" />
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-widest text-white/30 mb-2">Employer Match</label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Input label="Match %" value={inputs.employerMatchPercent} onChange={set('employerMatchPercent')} suffix="%" />
-                      <Input label="Comp Limit" value={inputs.irsCompLimit} onChange={set('irsCompLimit')} prefix="$" />
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase tracking-widest text-white/30 mb-2">Employer Match</label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Input label="Match %" value={inputs.employerMatchPercent} onChange={set('employerMatchPercent')} suffix="%" />
+                        <Input label="Comp Limit" value={inputs.irsCompLimit} onChange={set('irsCompLimit')} prefix="$" />
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-widest text-white/30 mb-2">Payroll Deductions</label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Input label="Dental" value={inputs.dentalPerPaycheck} onChange={set('dentalPerPaycheck')} prefix="$" />
-                      <Input label="Medical" value={inputs.medicalPerPaycheck} onChange={set('medicalPerPaycheck')} prefix="$" />
-                      <Input label="Vision" value={inputs.visionPerPaycheck} onChange={set('visionPerPaycheck')} prefix="$" />
-                      <Input label="Legal" value={inputs.legalPerPaycheck} onChange={set('legalPerPaycheck')} prefix="$" />
-                      <Input label="Life Ins" value={inputs.lifeInsPerPaycheck} onChange={set('lifeInsPerPaycheck')} prefix="$" />
-                      <Input label="Pay Periods" value={inputs.payPeriodsPerYear} onChange={set('payPeriodsPerYear')} />
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase tracking-widest text-white/30 mb-2">Payroll Deductions</label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Input label="Dental" value={inputs.dentalPerPaycheck} onChange={set('dentalPerPaycheck')} prefix="$" />
+                        <Input label="Medical" value={inputs.medicalPerPaycheck} onChange={set('medicalPerPaycheck')} prefix="$" />
+                        <Input label="Vision" value={inputs.visionPerPaycheck} onChange={set('visionPerPaycheck')} prefix="$" />
+                        <Input label="Legal" value={inputs.legalPerPaycheck} onChange={set('legalPerPaycheck')} prefix="$" />
+                        <Input label="Life Ins" value={inputs.lifeInsPerPaycheck} onChange={set('lifeInsPerPaycheck')} prefix="$" />
+                        <Input label="Pay Periods" value={inputs.payPeriodsPerYear} onChange={set('payPeriodsPerYear')} />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -375,10 +205,9 @@ function App() {
                 const barWidth = maxDollars > 0 ? (Math.abs(dollarDelta) / maxDollars) * 100 : 0;
 
                 return (
-                  <button
+                  <div
                     key={preset.id}
-                    onClick={() => toggle(preset.id)}
-                    className={`w-full text-left rounded-xl border px-3 py-2 transition-all duration-200 cursor-pointer group ${
+                    className={`rounded-xl border px-3 py-2 transition-all duration-200 ${
                       isActive
                         ? isExpense
                           ? 'bg-amber-500/[0.06] border-amber-500/20'
@@ -386,59 +215,67 @@ function App() {
                         : 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04]'
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                          isActive
-                            ? isExpense ? 'border-amber-400 bg-amber-400' : 'border-violet-400 bg-violet-400'
-                            : 'border-white/20'
+                    <button
+                      onClick={() => toggle(preset.id)}
+                      className="w-full text-left cursor-pointer group"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                            isActive
+                              ? isExpense ? 'border-amber-400 bg-amber-400' : 'border-violet-400 bg-violet-400'
+                              : 'border-white/20'
+                          }`}>
+                            {isActive && (
+                              <svg className="w-1.5 h-1.5 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <span className={`text-[12px] font-medium truncate block ${isActive ? 'text-white/80' : 'text-white/50'}`}>
+                              {preset.label}
+                            </span>
+                            <span className="text-[10px] text-white/20 font-mono tabular-nums">
+                              {isExpense ? '−' : '+'}{preset.monthly ? `${fmt(state.amount)}/mo` : `${fmt(state.amount)}/yr`}
+                            </span>
+                          </div>
+                        </div>
+                        <span className={`text-[11px] font-mono tabular-nums font-semibold flex-shrink-0 ${
+                          isExpense ? 'text-amber-400/80' : 'text-violet-400/80'
                         }`}>
-                          {isActive && (
-                            <svg className="w-1.5 h-1.5 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <span className={`text-[12px] font-medium truncate block ${isActive ? 'text-white/80' : 'text-white/50'}`}>
-                            {preset.label}
-                          </span>
-                          <span className="text-[10px] text-white/20 font-mono tabular-nums">
-                            {isExpense ? '−' : '+'}{preset.monthly ? `${fmt(state.amount)}/mo` : `${fmt(state.amount)}/yr`}
-                          </span>
-                        </div>
+                          +{fmt(dollarDelta)}/yr
+                        </span>
                       </div>
-                      <span className={`text-[11px] font-mono tabular-nums font-semibold flex-shrink-0 ${
-                        isExpense ? 'text-amber-400/80' : 'text-violet-400/80'
-                      }`}>
-                        +{fmt(dollarDelta)}/yr
-                      </span>
-                    </div>
-                    {/* Impact bar */}
-                    <div className="h-1 rounded-full bg-white/[0.04] overflow-hidden ml-4.5 mt-1.5">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ease-out ${
-                          isExpense ? 'bg-amber-400/40' : 'bg-violet-400/40'
-                        }`}
-                        style={{ width: `${barWidth}%` }}
-                      />
-                    </div>
+                      {/* Impact bar */}
+                      <div className="h-1 rounded-full bg-white/[0.04] overflow-hidden ml-4.5 mt-1.5">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ease-out ${
+                            isExpense ? 'bg-amber-400/40' : 'bg-violet-400/40'
+                          }`}
+                          style={{ width: `${barWidth}%` }}
+                        />
+                      </div>
+                    </button>
                     {/* Inline amount editor */}
                     {isActive && (
-                      <div className="mt-1.5 ml-4.5" onClick={(e) => e.stopPropagation()}>
+                      <div className="mt-1.5 ml-4.5">
                         <div className="relative inline-flex items-center">
                           <span className="absolute left-2 text-white/25 text-[11px] pointer-events-none">$</span>
                           <input
                             type="number"
-                            value={state.amount || ''}
-                            onChange={(e) => setAmount(preset.id, Number(e.target.value) || 0)}
+                            value={state.amount !== undefined && state.amount !== null ? state.amount : ''}
+                            onChange={(e) => {
+                              const raw = e.target.value;
+                              setAmount(preset.id, raw === '' ? 0 : Number(raw));
+                            }}
                             className="w-20 rounded-lg bg-black/30 border border-white/[0.08] text-white text-[11px] py-1 pl-5 pr-2 focus:outline-none focus:border-white/20 font-mono tabular-nums"
                           />
                           <span className="ml-1 text-[10px] text-white/25">{preset.monthly ? '/mo' : '/yr'}</span>
                         </div>
                       </div>
                     )}
-                  </button>
+                  </div>
                 );
               })}
             </div>
@@ -550,10 +387,10 @@ function App() {
                     open={retOpen} onToggle={() => setRetOpen(!retOpen)}
                     tip="Sum of all tax-advantaged contributions: 401k, mega backdoor Roth, HSA (employee + employer), and employer match."
                   >
-                    <Row label="Traditional 401k" value={fmt(inputs.traditional401k)} sub />
-                    <Row label="Mega Backdoor Roth" value={fmt(inputs.afterTax401k)} sub />
-                    <Row label="HSA (Employee)" value={fmt(inputs.hsaEmployee)} sub />
-                    <Row label="HSA (Employer)" value={fmt(inputs.hsaEmployer)} sub />
+                    <Row label="Traditional 401k" value={fmt(inputs.traditional401k ?? 0)} sub />
+                    <Row label="Mega Backdoor Roth" value={fmt(inputs.afterTax401k ?? 0)} sub />
+                    <Row label="HSA (Employee)" value={fmt(inputs.hsaEmployee ?? 0)} sub />
+                    <Row label="HSA (Employer)" value={fmt(inputs.hsaEmployer ?? 0)} sub />
                     <Row label="Employer Match" value={fmt(d.employerMatch)} sub delta={dl(r.employerMatch, d.employerMatch)} />
                   </ExpandableRow>
 
